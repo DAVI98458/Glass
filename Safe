@@ -1,0 +1,201 @@
+-- Carrega Rayfield
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Cria Janela
+local Window = Rayfield:CreateWindow({
+    Name = "script beta - by: shadown_gd",
+    LoadingTitle = "Loading script...",
+    LoadingSubtitle = "by @shadown_gd",
+    ConfigurationSaving = { Enabled=true, FolderName="ScriptBeta", FileName="Config" },
+    Discord = { Enabled=false },
+    KeySystem = true,
+    KeySettings = {
+        Title = "Shadown Hub Access",
+        Subtitle = "Key required",
+        Note = "Key: Best script",
+        FileName = "ShadownKeySave",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = {"Best script"}
+    }
+})
+
+-- ========== VISUAL ==========
+local espEnabledEnemies, espEnabledAllies, espHighlightEnabled = false, false, false
+local enemyColor = Color3.fromRGB(255,0,0)
+local allyColor = Color3.fromRGB(0,255,0)
+
+local function updateESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local isAlly = player.Team == LocalPlayer.Team
+            -- Enemy ESP
+            if espEnabledEnemies and not isAlly then
+                if not player.Character:FindFirstChild("EnemyESP") then
+                    local bg = Instance.new("BillboardGui", player.Character)
+                    bg.Name = "EnemyESP"; bg.Size=UDim2.new(0,100,0,20)
+                    bg.AlwaysOnTop=true; bg.StudsOffset=Vector3.new(0,3,0)
+                    local label=Instance.new("TextLabel", bg)
+                    label.Size=UDim2.new(1,0,1,0); label.BackgroundTransparency=1
+                    label.Text=player.Name; label.Font=Enum.Font.Arial; label.TextSize=14
+                end
+                local lbl = player.Character.EnemyESP:FindFirstChildWhichIsA("TextLabel")
+                if lbl then lbl.TextColor3 = enemyColor end
+            elseif player.Character:FindFirstChild("EnemyESP") then
+                player.Character.EnemyESP:Destroy()
+            end
+            -- Ally ESP
+            if espEnabledAllies and isAlly then
+                if not player.Character:FindFirstChild("AllyESP") then
+                    local bg = Instance.new("BillboardGui", player.Character)
+                    bg.Name = "AllyESP"; bg.Size=UDim2.new(0,100,0,20)
+                    bg.AlwaysOnTop=true; bg.StudsOffset=Vector3.new(0,3,0)
+                    local label=Instance.new("TextLabel", bg)
+                    label.Size=UDim2.new(1,0,1,0); label.BackgroundTransparency=1
+                    label.Text=player.Name; label.Font=Enum.Font.Arial; label.TextSize=14
+                end
+                local lbl = player.Character.AllyESP:FindFirstChildWhichIsA("TextLabel")
+                if lbl then lbl.TextColor3 = allyColor end
+            elseif player.Character:FindFirstChild("AllyESP") then
+                player.Character.AllyESP:Destroy()
+            end
+            -- Highlight
+            if espHighlightEnabled then
+                local hl = player.Character:FindFirstChild("Highlight")
+                if not hl then hl = Instance.new("Highlight", player.Character); hl.Name="Highlight" end
+                hl.FillTransparency = 1; hl.OutlineTransparency = 0
+                hl.OutlineColor = isAlly and Color3.fromRGB(0,0,255) or Color3.fromRGB(255,0,0)
+            elseif player.Character:FindFirstChild("Highlight") then
+                player.Character.Highlight:Destroy()
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do updateESP() end
+end)
+Players.PlayerAdded:Connect(function(pl) pl.CharacterAdded:Connect(function() task.wait(1); updateESP() end) end)
+LocalPlayer.CharacterAdded:Connect(function() task.wait(1); updateESP() end)
+
+-- Interface: Aba Visual
+local VisualTab = Window:CreateTab("👁️ Visual", Color3.fromRGB(255,0,0))
+VisualTab:CreateToggle({Name="ESP Nickname (Enemies)",CurrentValue=false,Callback=function(v) espEnabledEnemies=v end})
+VisualTab:CreateColorPicker({Name="Enemy Nickname Color",Color=enemyColor,Callback=function(v) enemyColor=v end})
+VisualTab:CreateToggle({Name="ESP Nickname (Allies)",CurrentValue=false,Callback=function(v) espEnabledAllies=v end})
+VisualTab:CreateColorPicker({Name="Ally Nickname Color",Color=allyColor,Callback=function(v) allyColor=v end})
+VisualTab:CreateToggle({Name="ESP Highlight (Red = Enemy, Blue = Ally)",CurrentValue=false,Callback=function(v) espHighlightEnabled=v end})
+
+-- ========== MODIFIERS ==========
+local ModTab = Window:CreateTab("⚙️ Modifiers", Color3.fromRGB(0,170,255))
+ModTab:CreateSlider({Name="WalkSpeed",Range={16,250},Increment=1,CurrentValue=16,Callback=function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.WalkSpeed=v end
+end})
+ModTab:CreateSlider({Name="Jump Power",Range={30,350},Increment=1,CurrentValue=50,Callback=function(v)
+    local h = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if h then h.UseJumpPower=true; h.JumpPower=v end
+end})
+ModTab:CreateSlider({Name="Gravity",Range={191.2,500},Increment=0.1,CurrentValue=Workspace.Gravity,Callback=function(v)
+    Workspace.Gravity = v
+end})
+local noclip=false
+ModTab:CreateToggle({Name="Noclip",CurrentValue=false,Callback=function(v) noclip=v end})
+RunService.Stepped:Connect(function()
+    if noclip and LocalPlayer.Character then
+        for _,p in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide=false end
+        end
+    end
+end)
+local infJump=false
+ModTab:CreateToggle({Name="Infinite Jump",CurrentValue=false,Callback=function(v) infJump=v end})
+UserInputService.JumpRequest:Connect(function()
+    if infJump and LocalPlayer.Character then
+        local h = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+ModTab:CreateButton({Name="TP Tool",Callback=function()
+    if LocalPlayer.Backpack:FindFirstChild("Teleport Tool") then return end
+    local tool=Instance.new("Tool",LocalPlayer.Backpack)
+    tool.Name="Teleport Tool"
+    tool.RequiresHandle=false
+    tool.Activated:Connect(function()
+        local m = LocalPlayer:GetMouse()
+        if m and m.Hit then
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if root then root.CFrame = CFrame.new(m.Hit.Position + Vector3.new(0,3,0)) end
+        end
+    end)
+end})
+
+-- ========== SAFE GLASS ==========
+local safeGlassEnabled = false
+local function getAllGlassParts()
+    local all = {}
+    local gp = workspace:FindFirstChild("GameRunningService") and workspace.GameRunningService.GlassBridges:FindFirstChild("GlassPairs")
+    if gp then
+        for _, row in ipairs(gp:GetChildren()) do
+            for _, part in ipairs(row:GetChildren()) do
+                if part:IsA("BasePart") then
+                    table.insert(all, part)
+                end
+            end
+        end
+    end
+    return all
+end
+
+local function getCorrectPositions()
+    local pos = {}
+    local folder = workspace:FindFirstChild("GameRunningService") and workspace.GameRunningService.GlassBridges:FindFirstChild("CorrectGlass")
+    if folder then
+        for _, p in ipairs(folder:GetChildren()) do
+            if p:IsA("BasePart") then
+                table.insert(pos, p.Position)
+            end
+        end
+    end
+    return pos
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if safeGlassEnabled then
+            local correctPos = getCorrectPositions()
+            for _, part in ipairs(getAllGlassParts()) do
+                local match=false
+                for _, cp in ipairs(correctPos) do
+                    if (part.Position - cp).Magnitude < 1 then
+                        match=true; break
+                    end
+                end
+                part.Color = match and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+                part.Material = Enum.Material.Neon
+            end
+        end
+    end
+end)
+
+-- Interface: Aba Glass Bridge
+local GlassTab = Window:CreateTab("🎮 Game: The Glass Bridge", Color3.fromRGB(0,200,150))
+GlassTab:CreateToggle({Name="Safe Glass",CurrentValue=false,Callback=function(v)
+    safeGlassEnabled=v
+    if not v then
+        for _, part in ipairs(getAllGlassParts()) do
+            part.Color = Color3.new(1,1,1)
+            part.Material = Enum.Material.Glass
+        end
+    end
+end})
+
+-- ========== CRÉDITOS ==========
+local CreditTab = Window:CreateTab("💼 Credits", Color3.fromRGB(255,255,0))
+CreditTab:CreateParagraph({Title="Director:",Content="@shadown_gd"})
+CreditTab:CreateParagraph({Title="Programmers:",Content="@shadown_gd and @Shadownchavoso"})
