@@ -13,15 +13,7 @@ local Window = Rayfield:CreateWindow({
     LoadingSubtitle = "by @shadown_gd",
     ConfigurationSaving = { Enabled=true, FolderName="ScriptBeta", FileName="Config" },
     Discord = { Enabled=false },
-    KeySystem = true,
-    KeySettings = {
-        Title = "Shadown Hub Access",
-        Subtitle = "Key required",
-        Note = "get the key where this script was posted on scriptblox.com",
-        FileName = "ShadownKeySave",
-        SaveKey = true,
-        GrabKeyFromSite = false,
-        Key = {"Best script"}
+    KeySystem = false
     }
 })
 
