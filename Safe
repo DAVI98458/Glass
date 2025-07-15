@@ -21,7 +21,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "ShadownKeySave",
         SaveKey = true,
         GrabKeyFromSite = false,
-        Key = {"Best scripts"}
+        Key = {"Best script"}
     }
 })
 
